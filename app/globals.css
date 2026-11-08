@@ -784,7 +784,6 @@ button { cursor: pointer; }
 /* Positions, grouped by asset class */
 .finance-groups { display: grid; gap: 18px; }
 .finance-group__head { display: flex; align-items: center; gap: 8px; margin: 0 4px 8px; font-size: 13px; }
-.finance-group__head > i { width: 8px; height: 8px; flex: 0 0 8px; border-radius: 99px; }
 .finance-group__name { font-weight: 650; }
 .finance-group__count { color: var(--fg-3); font-variant-numeric: tabular-nums; }
 .finance-group__sum { display: inline-flex; align-items: baseline; gap: 10px; margin-left: auto; color: var(--fg-2); font-weight: 600; font-variant-numeric: tabular-nums; }

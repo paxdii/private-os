@@ -1,9 +1,10 @@
 'use client';
 import { useState } from 'react';
 import type { AssetClass, Position } from '@/lib/finance/types';
-import { CLASS_COLOR, CLASS_LABEL, eur, gainColor, money, pct, signedEur, signedPct } from './format';
+import { CLASS_LABEL, eur, gainColor, money, pct, signedEur, signedPct } from './format';
 import { Money } from './Privacy';
 import { AssetIcon } from './AssetIcon';
+import { ClassIcon } from './ClassIcon';
 
 type View = 'class' | 'value' | 'gain';
 const VIEWS: { key: View; label: string }[] = [
@@ -57,7 +58,7 @@ function GroupHead({ cls, rows }: { cls: AssetClass; rows: Position[] }) {
   const gain = rows.reduce((sum, row) => sum + (row.gainEur || 0), 0);
   return (
     <div className="finance-group__head">
-      <i style={{ background: CLASS_COLOR[cls] }} aria-hidden />
+      <ClassIcon cls={cls} size={15} />
       <span className="finance-group__name">{CLASS_LABEL[cls]}</span>
       <span className="finance-group__count">{rows.length}</span>
       <span className="finance-group__sum">
