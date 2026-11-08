@@ -8,7 +8,7 @@ import { ClassIcon } from './ClassIcon';
 
 const PERIOD_TEXT: Record<FinancePeriod, string> = {
   '1W': 'in 1 Woche', '1M': 'in 1 Monat', '3M': 'in 3 Monaten', '6M': 'in 6 Monaten',
-  '1Y': 'in 1 Jahr', YTD: 'seit Jahresbeginn', ALL: 'gesamt',
+  '1Y': 'in 1 Jahr', '3Y': 'in 3 Jahren', YTD: 'seit Jahresbeginn', ALL: 'gesamt',
 };
 
 export function PortfolioHero({ summary, view, period, onPeriod }: {

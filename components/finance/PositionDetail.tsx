@@ -70,11 +70,16 @@ export function PositionDetail({
   const first = points[0]?.value;
   const last = points.at(-1)?.value;
   const change = first && last ? last / first - 1 : null;
+  // The axis follows the prices; reference lines outside that band are not drawn,
+  // otherwise a far-off entry price flattens the chart.
+  const values = points.map((point) => point.value);
+  const min0 = values.length ? Math.min(...values) : 0;
+  const max0 = values.length ? Math.max(...values) : 0;
+  const entryInRange = averageEntry != null && points.length > 1 && averageEntry >= min0 - yPad(min0, max0) && averageEntry <= max0 + yPad(min0, max0);
   const priceTone = change == null || change >= 0 ? UP : DOWN;
   const lineColor = '#c9d1dd';
   const ownAlerts = alerts.active.filter((alert) => alert.assetId === position.assetId);
   const chartAlerts = ownAlerts.filter((alert) => alert.currency === currency);
-  const referencePrices = [...chartAlerts.map((alert) => alert.target), ...(averageEntry != null ? [averageEntry] : [])];
 
   const allOwnActivities = activities
     .filter((activity) => (position.assetId ? activity.assetId === position.assetId : activity.identifier === position.identifier)
@@ -156,7 +161,7 @@ export function PositionDetail({
                 {change != null && <span style={{ color: gainColor(change) }}>{signedPct(change)}</span>}
               </div>
               <p className="text-muted text-xs mt-1">
-                {chartPeriod === 'ALL' ? 'Gesamter Verlauf' : `Verlauf ${chartPeriod === '1Y' ? '1 Jahr' : chartPeriod}`}
+                {chartPeriod === 'ALL' ? 'Gesamter Verlauf' : `Verlauf ${chartPeriod === '1Y' ? '1 Jahr' : chartPeriod === '3Y' ? '3 Jahre' : chartPeriod}`}
                 {history.data?.source ? ` · ${history.data.source}` : ''}
                 {history.data?.nativeCurrency && history.data.nativeCurrency !== currency ? ` · umgerechnet aus ${history.data.nativeCurrency}` : ''}
               </p>
@@ -180,7 +185,7 @@ export function PositionDetail({
                   </defs>
                   <CartesianGrid vertical={false} stroke="rgba(255,255,255,.055)" />
                   <XAxis dataKey="date" minTickGap={40} axisLine={false} tickLine={false} tick={{ fill: 'rgba(245,242,240,.34)', fontSize: 10 }} tickFormatter={shortDate} />
-                  <YAxis width={52} domain={[(min: number) => Math.min(min, ...referencePrices) * 0.97, (max: number) => Math.max(max, ...referencePrices) * 1.03]} axisLine={false} tickLine={false} tick={{ fill: 'rgba(245,242,240,.34)', fontSize: 10 }} tickFormatter={(value) => axisNumber(Number(value))} />
+                  <YAxis width={52} domain={[(min: number) => min - (yPad(min, max0) || min * 0.02), (max: number) => max + (yPad(min0, max) || max * 0.02)]} axisLine={false} tickLine={false} tick={{ fill: 'rgba(245,242,240,.34)', fontSize: 10 }} tickFormatter={(value) => axisNumber(Number(value))} />
                   <Tooltip
                     contentStyle={{ background: '#2a272b', border: 0, borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,.4)', fontSize: 12 }}
                     labelStyle={{ color: 'rgba(245,242,240,.6)' }}
@@ -188,15 +193,15 @@ export function PositionDetail({
                     formatter={(value: number) => [money(value, currency), 'Kurs']}
                   />
                   {chartAlerts.map((alert) => (
-                    <ReferenceLine key={alert.id} y={alert.target} stroke="#e8a33d" strokeDasharray="5 4" strokeOpacity={0.8} ifOverflow="extendDomain"
+                    <ReferenceLine key={alert.id} y={alert.target} stroke="#e8a33d" strokeDasharray="5 4" strokeOpacity={0.8} ifOverflow="discard"
                       label={{ value: `Alarm ${money(alert.target, currency)}`, position: 'insideTopRight', fill: '#e8a33d', fontSize: 10 }} />
                   ))}
                   {markers.map((marker) => <ReferenceLine key={`line-${marker.id}`} x={marker.date} stroke={marker.type === 'buy' ? BUY : SELL} strokeWidth={1.5} strokeOpacity={0.75} />)}
                   <Area dataKey="value" type="monotone" stroke={lineColor} strokeWidth={2} fill="url(#financeDetailFill)" dot={false} />
-                  {averageEntry != null && <ReferenceLine y={averageEntry} stroke="#8fa6d6" strokeDasharray="6 4" ifOverflow="extendDomain"
+                  {entryInRange && <ReferenceLine y={averageEntry!} stroke="#8fa6d6" strokeDasharray="6 4" ifOverflow="discard"
                     label={{ value: `Ø Einstand ${money(averageEntry, currency)}`, position: 'insideTopLeft', fill: "#8fa6d6", fontSize: 10 }} />}
                   {markers.map((marker) => <ReferenceDot key={marker.id} x={marker.date} y={marker.value} r={6} shape={(props: { cx?: number; cy?: number }) => <TradeMark cx={props.cx} cy={props.cy} type={marker.type} />} />)}
-                  {last != null && <ReferenceLine y={last} stroke={priceTone} strokeDasharray="2 3" strokeOpacity={0.9} ifOverflow="extendDomain"
+                  {last != null && <ReferenceLine y={last} stroke={priceTone} strokeDasharray="2 3" strokeOpacity={0.9} ifOverflow="discard"
                     label={(props: { viewBox?: { x: number; y: number; width: number } }) => <PriceTag viewBox={props.viewBox} text={last.toLocaleString('de-AT', { minimumFractionDigits: 2, maximumFractionDigits: Math.abs(last) < 1 ? 4 : 2 })} color={priceTone} />} />}
                 </AreaChart>
               </ResponsiveContainer>
@@ -205,7 +210,7 @@ export function PositionDetail({
           <div className="finance-trade-legend">
             {markers.some((m) => m.type === 'buy') && <span><i className="finance-trade-legend__buy" /> Kauf</span>}
             {markers.some((m) => m.type === 'sell') && <span><i className="finance-trade-legend__sell" /> Verkauf</span>}
-            {averageEntry != null && <span><i className="finance-trade-legend__entry" /> Ø Einstand</span>}
+            {averageEntry != null && <span><i className="finance-trade-legend__entry" /> Ø Einstand{!entryInRange && ` ${money(averageEntry, currency)} ${averageEntry > max0 ? '↑ über' : '↓ unter'} dem Bereich`}</span>}
             {last != null && <span><i className="finance-trade-legend__now" style={{ borderColor: priceTone }} /> Aktueller Kurs</span>}
           </div>
           {position.cls === 'metals' && <p className="text-muted text-xs mt-2">Richtwert aus Börsen-Futures je gebuchter Einheit, ohne Münz-Aufschlag.</p>}
@@ -284,6 +289,10 @@ function tradeLine(activity: FinanceActivity) {
   const shares = `${activity.shares.toLocaleString('de-AT', { maximumFractionDigits: 8 })} Anteile`;
   if (activity.currency && activity.currency !== 'EUR' && activity.priceOriginal != null) return `${shares} · ${money(activity.priceOriginal, activity.currency)} je Anteil`;
   return activity.price != null ? `${shares} · ${money(activity.price)} je Anteil` : shares;
+}
+
+function yPad(min: number, max: number) {
+  return (max - min) * 0.08;
 }
 
 function axisNumber(value: number) {

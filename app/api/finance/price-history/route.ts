@@ -15,6 +15,7 @@ const RANGES: Record<FinancePeriod, { yahoo: string; coinDays: number }> = {
   '3M': { yahoo: '3mo', coinDays: 90 },
   '6M': { yahoo: '6mo', coinDays: 180 },
   '1Y': { yahoo: '1y', coinDays: 365 },
+  '3Y': { yahoo: '3y', coinDays: 1095 },
   YTD: { yahoo: '1y', coinDays: 365 },
   ALL: { yahoo: 'max', coinDays: 365 },
 };

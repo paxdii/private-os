@@ -1,12 +1,13 @@
 import type { FinanceActivity, ValuePoint } from './types';
 
-export type FinancePeriod = '1W' | '1M' | '3M' | '6M' | '1Y' | 'YTD' | 'ALL';
+export type FinancePeriod = '1W' | '1M' | '3M' | '6M' | '1Y' | '3Y' | 'YTD' | 'ALL';
 export const FINANCE_PERIODS: { key: FinancePeriod; label: string }[] = [
   { key: '1W', label: '1W' },
   { key: '1M', label: '1M' },
   { key: '3M', label: '3M' },
   { key: '6M', label: '6M' },
   { key: '1Y', label: '1J' },
+  { key: '3Y', label: '3J' },
   { key: 'YTD', label: 'YTD' },
   { key: 'ALL', label: 'Gesamt' },
 ];
@@ -37,6 +38,7 @@ export function periodStart(period: FinancePeriod, today: string): string | null
   if (period === '3M') shiftMonths(date, -3);
   if (period === '6M') shiftMonths(date, -6);
   if (period === '1Y') shiftMonths(date, -12);
+  if (period === '3Y') shiftMonths(date, -36);
   return date.toISOString().slice(0, 10);
 }
 
