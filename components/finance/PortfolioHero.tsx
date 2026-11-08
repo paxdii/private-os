@@ -4,6 +4,7 @@ import type { FinancePeriod, PeriodView } from '@/lib/finance/period';
 import { CLASS_COLOR, eur, gainColor, pct, signedEur, signedPct } from './format';
 import { Money } from './Privacy';
 import { PeriodSelector } from './PeriodSelector';
+import { ClassIcon } from './ClassIcon';
 
 const PERIOD_TEXT: Record<FinancePeriod, string> = {
   '1W': 'in 1 Woche', '1M': 'in 1 Monat', '3M': 'in 3 Monaten', '6M': 'in 6 Monaten',
@@ -50,7 +51,7 @@ export function PortfolioHero({ summary, view, period, onPeriod }: {
           <ul className="finance-alloc__legend">
             {slices.map((slice) => (
               <li key={slice.cls}>
-                <i style={{ background: CLASS_COLOR[slice.cls] }} aria-hidden />
+                <ClassIcon cls={slice.cls} />
                 <span>{slice.label}</span>
                 <b>{pct(slice.pct, 0)}</b>
               </li>

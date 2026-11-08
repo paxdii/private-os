@@ -5,7 +5,7 @@ import { PWAProvider } from '@/components/PWAProvider';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Private Dashboard',
+  title: { default: 'Today · Private Dashboard', template: '%s · Private Dashboard' },
   description: 'Personal life dashboard — Habits, Health, Reflexion',
   applicationName: 'Private Dashboard',
   manifest: '/manifest.webmanifest',

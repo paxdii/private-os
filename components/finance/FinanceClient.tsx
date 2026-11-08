@@ -16,6 +16,7 @@ import { ReturnsPanel } from './ReturnsPanel';
 import { ActivityExplorer } from './ActivityExplorer';
 import { PerformanceAnalysis } from './PerformanceAnalysis';
 import { AlertBanner } from './PriceAlerts';
+import { RealizedHistory } from './RealizedHistory';
 
 type SummaryResp = { ok: boolean } & FinanceSummary;
 type AssetsResp = { ok: boolean; assets: FinanceAsset[] };
@@ -109,6 +110,8 @@ export function FinanceClient() {
                 <ActivityExplorer activities={view.activities} />
               </aside>
             </div>
+
+            <RealizedHistory activities={summary.activities} assets={assets} />
           </div>
         )}
 

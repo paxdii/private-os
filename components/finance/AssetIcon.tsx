@@ -32,6 +32,7 @@ export function AssetIcon({ position, size = 40 }: { position: Position; size?: 
   if (position.cls === 'metals') return <MetalCoin position={position} size={size} />;
   if (position.cls === 'cash') return <span className="finance-asset-icon" style={style} aria-hidden><span>€</span></span>;
 
+  if (position.cls === 'crypto' && (position.symbol || '').toUpperCase() === 'SOL') return <SolanaMark size={size} />;
   const src = logoCandidates(position)[attempt];
   const initials = (position.symbol || position.name).replace(/[^a-zA-Z0-9]/g, '').slice(0, 2).toUpperCase();
   return (
@@ -64,6 +65,25 @@ function MetalCoin({ position, size }: { position: Position; size: number }) {
         <text x="16" y="20.2" textAnchor="middle" fontSize="11" fontWeight="700" fill="rgba(0,0,0,.45)" fontFamily="system-ui, sans-serif">
           {tone === 'amber' ? 'Au' : 'Pt'}
         </text>
+      </svg>
+    </span>
+  );
+}
+
+// The generic icon sets still ship Solana's old flat green; this is the current
+// mark with its purple-to-teal gradient.
+function SolanaMark({ size }: { size: number }) {
+  return (
+    <span className="finance-asset-icon finance-asset-icon--logo" style={{ width: size, height: size, background: '#14151f' }} aria-hidden>
+      <svg viewBox="0 0 32 32" width="62%" height="62%">
+        <defs>
+          <linearGradient id="solana-mark" x1="0" y1="1" x2="1" y2="0">
+            <stop offset="0" stopColor="#9945ff" />
+            <stop offset=".55" stopColor="#5f8bfa" />
+            <stop offset="1" stopColor="#19fb9b" />
+          </linearGradient>
+        </defs>
+        <path fill="url(#solana-mark)" d="M9.6 6h18.4l-4.4 4.6H5.2zM5.2 13.7h18.4l4.4 4.6H9.6zM9.6 21.4h18.4L23.6 26H5.2z" />
       </svg>
     </span>
   );

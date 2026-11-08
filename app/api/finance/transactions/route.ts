@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   calculateCashBalance, createTransaction, deleteTransaction, listAssets, listTransactions, recalculateAssetFromLedger, updateTransaction,
 } from '@/lib/finance/portfolio';
-import { fxRateOn } from '@/lib/finance/prices';
+import { toEur } from '@/lib/finance/trade';
 import type { ActivityType, FinanceAsset, FinanceTransaction } from '@/lib/finance/types';
 
 export const runtime = 'nodejs';
@@ -79,21 +79,6 @@ export async function DELETE(req: NextRequest) {
     if (before?.assetId) await recalculateAssetFromLedger(before.assetId);
     return NextResponse.json({ ok: true });
   } catch (error: any) { return NextResponse.json({ ok: false, error: error?.message || String(error) }, { status: 500 }); }
-}
-
-// The ledger computes in EUR. A trade typed in USD keeps the typed values and is
-// converted at that day's rate, so cost basis and gains stay consistent.
-async function toEur(tx: Partial<FinanceTransaction>): Promise<Partial<FinanceTransaction>> {
-  const currency = String(tx.currency || 'EUR').toUpperCase();
-  if (currency === 'EUR') return { ...tx, currency: 'EUR' };
-  if (!/^[A-Z]{3}$/.test(currency)) throw new Error('invalid_currency');
-  const rate = await fxRateOn(currency, 'EUR', String(tx.datetime).slice(0, 10));
-  const convert = (value: unknown) => value == null || !Number.isFinite(Number(value)) ? undefined : Number(value) * rate;
-  return {
-    ...tx, currency, fxRate: rate,
-    priceOriginal: tx.price, amountOriginal: tx.amount, feeOriginal: tx.fee, taxOriginal: tx.tax,
-    price: convert(tx.price), amount: convert(tx.amount) ?? 0, fee: convert(tx.fee), tax: convert(tx.tax),
-  };
 }
 
 function cashMovementError(asset: FinanceAsset, tx: Pick<FinanceTransaction, 'type' | 'datetime' | 'amount' | 'fee' | 'tax'>): string | null {

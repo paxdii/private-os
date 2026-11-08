@@ -181,6 +181,8 @@ Alle zeitbezogenen Endpunkte verstehen dieselben Parameter:
 | `GET /health` | Gesundheit | `date` \| `from`+`to`, `blood` |
 | `GET /habits` | Gewohnheiten | `date` \| `from`+`to` |
 | `GET /finance` | Finanzen | `activities` |
+| `GET /finance/assets` | Asset-Suche (Depot + Börse) | `q` |
+| `POST /finance/trades` | Kauf/Verkauf/Dividende buchen (Schreiben) | `asset_id` \| `symbol`, `type`, `date`, `time`, `shares`, `price`, `amount`, `fee`, `tax`, `currency`, `note`, `allow_duplicate` |
 | `GET /subscriptions` | Abonnements | `date`, `horizon` |
 | `GET /goals` | Ziele | `month`, `date` |
 | `GET /todo` | Planer / To-dos | `date=YYYY-MM-DD\|today\|tomorrow`, `open=0\|1`, `inbox=0\|1`, `include_deleted=0\|1` |
@@ -1092,7 +1094,7 @@ Wechsel auf `abgebrochen` −150.
 | Bereich | Grund |
 |---|---|
 | Endgültiges Löschen | To-dos können weich gelöscht und wiederhergestellt werden; kein Agent-Endpunkt löscht Daten permanent. |
-| Finanzen | Krypto-, Edelmetall- und Cash-Positionen, Sparplan, Sparziele, Einkommen bleiben schreibgeschützt — Geldbeträge ändert nur der Mensch. |
+| Finanzen (außer Trades) | Nur Kauf, Verkauf und Dividende lassen sich über `POST /finance/trades` buchen. Löschen, Ändern, Cash-Konten, Edelmetalle, Sparplan, Sparziele und Einkommen bleiben schreibgeschützt. |
 | Urlaubsmodus | Verändert rückwirkend Serien und Erfüllungsquoten über einen ganzen Zeitraum hinweg. |
 | Reflexionen | Liegen in Notion. Lesen ja, schreiben nein — eine externe Datenbank ist kein Ort für automatische Schreibzugriffe. |
 | Abonnements | Notion ist die Quelle der Wahrheit; auch das Dashboard schreibt dort nicht hinein. |

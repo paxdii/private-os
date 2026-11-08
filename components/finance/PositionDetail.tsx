@@ -70,6 +70,8 @@ export function PositionDetail({
   const first = points[0]?.value;
   const last = points.at(-1)?.value;
   const change = first && last ? last / first - 1 : null;
+  const priceTone = change == null || change >= 0 ? UP : DOWN;
+  const lineColor = '#c9d1dd';
   const ownAlerts = alerts.active.filter((alert) => alert.assetId === position.assetId);
   const chartAlerts = ownAlerts.filter((alert) => alert.currency === currency);
   const referencePrices = [...chartAlerts.map((alert) => alert.target), ...(averageEntry != null ? [averageEntry] : [])];
@@ -172,8 +174,8 @@ export function PositionDetail({
                 <AreaChart data={points} margin={{ top: 12, right: 8, bottom: 0, left: 0 }}>
                   <defs>
                     <linearGradient id="financeDetailFill" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#9dc4a8" stopOpacity={0.3} />
-                      <stop offset="100%" stopColor="#9dc4a8" stopOpacity={0} />
+                      <stop offset="0%" stopColor={lineColor} stopOpacity={0.22} />
+                      <stop offset="100%" stopColor={lineColor} stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid vertical={false} stroke="rgba(255,255,255,.055)" />
@@ -189,15 +191,23 @@ export function PositionDetail({
                     <ReferenceLine key={alert.id} y={alert.target} stroke="#e8a33d" strokeDasharray="5 4" strokeOpacity={0.8} ifOverflow="extendDomain"
                       label={{ value: `Alarm ${money(alert.target, currency)}`, position: 'insideTopRight', fill: '#e8a33d', fontSize: 10 }} />
                   ))}
-                  <Area dataKey="value" type="monotone" stroke="#9dc4a8" strokeWidth={2} fill="url(#financeDetailFill)" dot={false} />
-                  {averageEntry != null && <ReferenceLine y={averageEntry} stroke="#9daac4" strokeDasharray="6 4" ifOverflow="extendDomain"
-                    label={{ value: `Ø Einstand ${money(averageEntry, currency)}`, position: 'insideTopLeft', fill: '#9daac4', fontSize: 10 }} />}
-                  {markers.map((marker) => <ReferenceDot key={marker.id} x={marker.date} y={marker.value} r={4.5} fill={marker.type === 'buy' ? '#9dc4a8' : '#e8a33d'} stroke="#211f22" strokeWidth={2} />)}
+                  {markers.map((marker) => <ReferenceLine key={`line-${marker.id}`} x={marker.date} stroke={marker.type === 'buy' ? BUY : SELL} strokeWidth={1.5} strokeOpacity={0.75} />)}
+                  <Area dataKey="value" type="monotone" stroke={lineColor} strokeWidth={2} fill="url(#financeDetailFill)" dot={false} />
+                  {averageEntry != null && <ReferenceLine y={averageEntry} stroke="#8fa6d6" strokeDasharray="6 4" ifOverflow="extendDomain"
+                    label={{ value: `Ø Einstand ${money(averageEntry, currency)}`, position: 'insideTopLeft', fill: "#8fa6d6", fontSize: 10 }} />}
+                  {markers.map((marker) => <ReferenceDot key={marker.id} x={marker.date} y={marker.value} r={6} shape={(props: { cx?: number; cy?: number }) => <TradeMark cx={props.cx} cy={props.cy} type={marker.type} />} />)}
+                  {last != null && <ReferenceLine y={last} stroke={priceTone} strokeDasharray="2 3" strokeOpacity={0.9} ifOverflow="extendDomain"
+                    label={(props: { viewBox?: { x: number; y: number; width: number } }) => <PriceTag viewBox={props.viewBox} text={last.toLocaleString('de-AT', { minimumFractionDigits: 2, maximumFractionDigits: Math.abs(last) < 1 ? 4 : 2 })} color={priceTone} />} />}
                 </AreaChart>
               </ResponsiveContainer>
             )}
           </div>
-          {!!markers.length && <div className="finance-trade-legend"><span><i className="finance-trade-legend__buy" /> Kauf</span><span><i className="finance-trade-legend__sell" /> Verkauf</span></div>}
+          <div className="finance-trade-legend">
+            {markers.some((m) => m.type === 'buy') && <span><i className="finance-trade-legend__buy" /> Kauf</span>}
+            {markers.some((m) => m.type === 'sell') && <span><i className="finance-trade-legend__sell" /> Verkauf</span>}
+            {averageEntry != null && <span><i className="finance-trade-legend__entry" /> Ø Einstand</span>}
+            {last != null && <span><i className="finance-trade-legend__now" style={{ borderColor: priceTone }} /> Aktueller Kurs</span>}
+          </div>
           {position.cls === 'metals' && <p className="text-muted text-xs mt-2">Richtwert aus Börsen-Futures je gebuchter Einheit, ohne Münz-Aufschlag.</p>}
 
           <div className="finance-detail__section">
@@ -218,10 +228,11 @@ export function PositionDetail({
           <div className="finance-detail__transactions">
             {ownActivities.length ? ownActivities.map((activity) => (
               <div key={activity.id}>
-                <span>{activityLabel(activity.type)}<small>{tradeLine(activity)}</small></span>
+                <span><i className={`finance-tx-chip finance-tx-chip--${activity.type}`}>{activityLabel(activity.type)}</i><small>{tradeLine(activity)}</small></span>
                 <span>{shortDateYear(activity.datetime.slice(0, 10))}</span>
                 <span className="text-right">
-                  <Money>{activity.currency && activity.currency !== 'EUR' && activity.amountOriginal != null ? money(activity.amountOriginal, activity.currency) : eur(activity.amount, { decimals: true })}</Money>
+                  <Money><span className={`finance-tx-amount finance-tx-amount--${activity.type}`}>{amountSign(activity.type)}{activity.currency && activity.currency !== 'EUR' && activity.amountOriginal != null ? money(activity.amountOriginal, activity.currency) : eur(activity.amount, { decimals: true })}</span></Money>
+                  {activity.type === 'sell' && activity.realizedGainNet != null && <small><Money><span style={{ color: gainColor(activity.realizedGainNet) }}>{signedEur(activity.realizedGainNet)} realisiert</span></Money></small>}
                   {activity.currency && activity.currency !== 'EUR' && <small><Money>≈ {eur(activity.amount, { decimals: true })}</Money></small>}
                 </span>
               </div>
@@ -232,6 +243,36 @@ export function PositionDetail({
     </div>,
     document.body,
   );
+}
+
+const BUY = '#5fbf86';
+const SELL = '#e8774f';
+const UP = '#5fbf86';
+const DOWN = '#e5604f';
+
+function amountSign(type: FinanceActivity['type']) {
+  return type === 'buy' || type === 'withdrawal' || type === 'transfer_out' || type === 'fees_taxes' ? '−' : type === 'sell' || type === 'dividend' || type === 'interest' || type === 'deposit' ? '+' : '';
+}
+
+// Buy: green triangle pointing up; sell: orange triangle pointing down.
+function TradeMark({ cx, cy, type }: { cx?: number; cy?: number; type: 'buy' | 'sell' }) {
+  if (cx == null || cy == null) return null;
+  const color = type === 'buy' ? BUY : SELL;
+  const path = type === 'buy'
+    ? `M${cx},${cy - 7} L${cx + 6},${cy + 4} L${cx - 6},${cy + 4} Z`
+    : `M${cx},${cy + 7} L${cx + 6},${cy - 4} L${cx - 6},${cy - 4} Z`;
+  return <path d={path} fill={color} stroke="#211f22" strokeWidth={1.5} />;
+}
+
+// Price pill on the right edge, like a trading chart's last-price marker.
+function PriceTag({ viewBox, text, color }: { viewBox?: { x: number; y: number; width: number }; text: string; color: string }) {
+  if (!viewBox) return null;
+  const width = Math.max(44, text.length * 6.6 + 12);
+  const x = viewBox.x + viewBox.width - width;
+  return <g>
+    <rect x={x} y={viewBox.y - 9} width={width} height={18} rx={5} fill={color} />
+    <text x={x + width / 2} y={viewBox.y + 4} textAnchor="middle" fontSize={10.5} fontWeight={700} fill="#14231a">{text}</text>
+  </g>;
 }
 
 function Stat({ label, children }: { label: string; children: React.ReactNode }) {

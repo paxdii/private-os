@@ -36,15 +36,16 @@ gelten dieselben Regeln — Parameter- und Feldprüfung, XP-Vergabe, Not-Aus
 ## Tools
 
 **Lesen:** `get_daily_brief`, `get_health`, `get_habits`, `get_reflections`,
-`get_goals`, `get_todos`, `get_finance`, `get_subscriptions`, `get_passage`,
-`get_xp`.
+`get_goals`, `get_todos`, `get_finance`, `finance_search_assets`,
+`get_subscriptions`, `get_passage`, `get_xp`.
 
 **Schreiben:** `habit_set_daily`, `habit_set_weekly`, `journal_write`,
 `goal_create`, `goal_update`, `todo_create`, `todo_update`, `todo_delete`
-(weich), `todo_restore`.
+(weich), `todo_restore`, `finance_add_trade`.
 
-Reflexionen (Notion), Finanzen und Abos sind bewusst nur lesbar — dieselben
-Gründe wie in AGENT_API.md unter „Bewusst NICHT über die API verfügbar".
+Reflexionen (Notion) und Abos sind bewusst nur lesbar. Bei den Finanzen lassen
+sich nur Käufe, Verkäufe und Dividenden buchen (`finance_add_trade`, ohne Preis
+gilt der Schlusskurs am Handelstag); Löschen und Ändern bleibt dem Menschen.
 
 ## Sicherheit
 

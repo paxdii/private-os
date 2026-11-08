@@ -23,6 +23,8 @@ import * as habitToggleRoute from '@/app/api/agent/v1/habits/toggle/route';
 import * as habitWeeklyRoute from '@/app/api/agent/v1/habits/weekly/route';
 import * as habitDayRoute from '@/app/api/agent/v1/habits/day/route';
 import * as financeRoute from '@/app/api/agent/v1/finance/route';
+import * as financeAssetsRoute from '@/app/api/agent/v1/finance/assets/route';
+import * as financeTradesRoute from '@/app/api/agent/v1/finance/trades/route';
 import * as subscriptionsRoute from '@/app/api/agent/v1/subscriptions/route';
 import * as goalsRoute from '@/app/api/agent/v1/goals/route';
 import * as todoRoute from '@/app/api/agent/v1/todo/route';
@@ -46,7 +48,8 @@ Konventionen:
 - Zustände werden gesetzt, nicht umgeschaltet: habit_set_daily mit done=true zweimal ändert nichts.
 - Für zukünftige Tage lassen sich keine Gewohnheiten oder Journal-Einträge schreiben.
 - Gewohnheiten und Ziele vergeben XP nach den Dashboard-Regeln (auch Abzüge, z. B. beim Abbrechen eines Ziels).
-- Reflexionen (Notion), Finanzen und Abonnements sind nur lesbar. To-dos werden nur weich gelöscht und lassen sich wiederherstellen.`;
+- Reflexionen (Notion) und Abonnements sind nur lesbar. To-dos werden nur weich gelöscht und lassen sich wiederherstellen.
+- Finanzen: Käufe, Verkäufe und Dividenden mit finance_add_trade buchen. Vorher finance_search_assets aufrufen und asset_id (im Depot) oder symbol (neu) übernehmen. Buchungen lassen sich hier nicht löschen; vor dem Buchen Werte mit dem Nutzer abgleichen.`;
 
 // ── Calling the agent routes ─────────────────────────────────────────────
 
@@ -204,6 +207,13 @@ export function createDashboardMcpServer(principal: McpPrincipal): McpServer {
     annotations: READ_ONLY,
   }, read(financeRoute.GET));
 
+  server.registerTool('finance_search_assets', {
+    title: 'Finanzen: Asset suchen',
+    description: 'Sucht Aktien, ETFs und Krypto nach Name, Ticker oder ISIN. Liefert Positionen aus dem Depot (asset_id, auch früher gehaltene) und neue Börsen-Treffer (symbol) für finance_add_trade.',
+    inputSchema: { q: z.string().min(2).max(100).describe('Name, Ticker oder ISIN, z. B. "Microsoft", "NVDA", "Ethereum".') },
+    annotations: { ...READ_ONLY, openWorldHint: true },
+  }, read(financeAssetsRoute.GET));
+
   server.registerTool('get_subscriptions', {
     title: 'Abonnements / Fixkosten',
     description: 'Laufende Kosten mit Monats- und Jahressumme, Kategorien und den nächsten Abbuchungen.',
@@ -299,6 +309,29 @@ export function createDashboardMcpServer(principal: McpPrincipal): McpServer {
     },
     annotations: WRITES,
   }, (args) => call(goalsRoute.PATCH, 'PATCH', args));
+
+  // ── Finanzen ───────────────────────────────────────────────────────────
+
+  server.registerTool('finance_add_trade', {
+    title: 'Finanzen: Kauf/Verkauf buchen',
+    description: 'Bucht einen Kauf, Verkauf oder eine Dividende ins Depot. Ohne price und amount gilt der Schlusskurs am Handelstag. Ein neues Asset (symbol) wird mit dem ersten Kauf angelegt. Gleiche Buchung am selben Tag wird als Duplikat abgelehnt.',
+    inputSchema: {
+      asset_id: z.string().optional().describe('asset_id aus finance_search_assets (in_ledger). Nicht zusammen mit symbol.'),
+      symbol: z.string().optional().describe('symbol aus finance_search_assets (new_listings), z. B. "MSFT" oder "ADA-EUR". Nicht zusammen mit asset_id.'),
+      type: z.enum(['buy', 'sell', 'dividend']),
+      date: z.string().optional().describe('Handelstag YYYY-MM-DD (Europe/Vienna). Standard: heute.'),
+      time: z.string().optional().describe('Uhrzeit HH:MM (Europe/Vienna). Standard: 12:00.'),
+      shares: z.number().positive().optional().describe('Stückzahl (Pflicht bei buy/sell).'),
+      price: z.number().positive().optional().describe('Preis je Stück in currency. Standard: Marktkurs.'),
+      amount: z.number().positive().optional().describe('Gesamtbetrag ohne Gebühren in currency. Pflicht bei dividend.'),
+      fee: z.number().min(0).optional().describe('Gebühren in currency.'),
+      tax: z.number().min(0).optional().describe('Steuern in currency.'),
+      currency: z.enum(['EUR', 'USD']).optional().describe('Währung der Beträge. USD wird zum Tageskurs in EUR verbucht. Standard: EUR.'),
+      note: z.string().max(300).optional().describe('Notiz, z. B. Broker oder Order-ID.'),
+      allow_duplicate: z.boolean().optional().describe('Nur true, wenn wirklich zwei gleiche Buchungen am selben Tag gewollt sind.'),
+    },
+    annotations: { ...WRITES, openWorldHint: true },
+  }, (args) => call(financeTradesRoute.POST, 'POST', args));
 
   // ── To-dos ─────────────────────────────────────────────────────────────
 

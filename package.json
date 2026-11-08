@@ -29,6 +29,7 @@
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "recharts": "^2.13.0",
+    "unpdf": "^1.4.0",
     "web-push": "3.6.7",
     "workflow": "^4.8.9",
     "zod": "4.3.6"
