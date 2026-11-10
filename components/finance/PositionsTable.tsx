@@ -62,7 +62,7 @@ function GroupHead({ cls, rows }: { cls: AssetClass; rows: Position[] }) {
       <span className="finance-group__name">{CLASS_LABEL[cls]}</span>
       <span className="finance-group__count">{rows.length}</span>
       <span className="finance-group__sum">
-        {cls !== 'cash' && cost > 0 && <b style={{ color: gainColor(gain) }}>{signedPct(gain / cost)}</b>}
+        {cls !== 'cash' && cost > 0 && <b style={{ color: gainColor(gain) }}><Money>{signedEurShort(gain)}</Money> · {signedPct(gain / cost)}</b>}
         <Money>{eur(value)}</Money>
         <span className="finance-group__share">{pct(share, 0)}</span>
       </span>
@@ -84,11 +84,16 @@ function Row({ position: p, onSelect }: { position: Position; onSelect: (positio
       <div className="finance-position__value">
         <Money>{eur(p.valueEur, { decimals: true })}</Money>
         {!cash && p.gainPct != null
-          ? <small style={{ color: gainColor(p.gainEur) }}><span className="finance-position__gain-eur"><Money>{signedEur(p.gainEur ?? 0)}</Money> · </span>{signedPct(p.gainPct)}</small>
+          ? <small style={{ color: gainColor(p.gainEur) }}><Money><span className="finance-position__gain-eur">{signedEur(p.gainEur ?? 0)}</span><span className="finance-position__gain-eur-short">{signedEurShort(p.gainEur ?? 0)}</span></Money> · {signedPct(p.gainPct)}</small>
           : <small>{pct(p.allocationPct ?? 0, 1)}</small>}
       </div>
     </button>
   );
+}
+
+// Whole euros keep the row short on a phone.
+function signedEurShort(n: number): string {
+  return `${n >= 0 ? '+' : '−'}${eur(Math.abs(n))}`;
 }
 
 function trimShares(n: number): string {

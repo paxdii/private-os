@@ -814,6 +814,7 @@ button { cursor: pointer; }
 .finance-position__meta { overflow: hidden; margin-top: 2px; color: var(--fg-3); font-size: 12.5px; text-overflow: ellipsis; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .finance-position__value { display: grid; justify-items: end; gap: 2px; font-size: 15px; font-weight: 650; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .finance-position__value small { color: var(--fg-3); font-size: 12.5px; font-weight: 550; }
+.finance-position__gain-eur-short { display: none; }
 .finance-asset-icon {
   display: grid;
   flex: 0 0 auto;
@@ -1026,6 +1027,7 @@ button { cursor: pointer; }
   .finance-net-worth { font-size: clamp(2.5rem, 12vw, 3.3rem); }
   .finance-panel { padding: 16px; border-radius: 20px; }
   .finance-group__share, .finance-position__gain-eur { display: none; }
+  .finance-position__gain-eur-short { display: inline; }
   .finance-position { gap: 11px; padding: 10px 12px 10px 10px; }
   .finance-overlay { align-items: stretch; padding: 0; }
   .finance-detail, .finance-sheet {
