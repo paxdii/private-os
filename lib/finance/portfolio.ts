@@ -83,6 +83,12 @@ export async function recalculateAssetFromLedger(assetId: string) {
       const averageCost = shares > 0 ? cost / shares : 0;
       shares = Math.max(0, shares - quantity);
       cost = Math.max(0, cost - averageCost * removed);
+      // Sales booked here get their gain at average cost; imported ones keep theirs.
+      if (tx.type === 'sell' && tx.realizedGainNet == null && removed > 0) {
+        const fees = Math.abs(Number(tx.fee) || 0) + Math.abs(Number(tx.tax) || 0);
+        tx.realizedGainNet = Math.abs(Number(tx.amount) || 0) - fees - averageCost * removed;
+        await updateTransaction(tx.id, { realizedGainNet: tx.realizedGainNet });
+      }
     }
     realized += Number(tx.realizedGainNet) || 0;
   }
